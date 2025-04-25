@@ -23,10 +23,10 @@ public class Pong {
         state.reset();
     }
 
-    public void update(Iterable<Action> actions) {
+    public Event update(Iterable<Action> actions) {
         for (var action : actions)
             action.apply(this);
-        state.update();
+        return state.update();
     }
 
     public void movePaddle(Side s, int dy) {

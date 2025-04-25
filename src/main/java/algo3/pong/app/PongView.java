@@ -1,5 +1,6 @@
 package algo3.pong.app;
 
+import algo3.pong.Event;
 import algo3.pong.Pong;
 import algo3.pong.Side;
 import javafx.scene.Group;
@@ -16,10 +17,13 @@ import java.util.Set;
 public class PongView extends Group {
     private final Canvas canvas;
     private final List<View> views;
+    private final SoundEffects sfx;
 
     private final Set<KeyCode> keysPressed = new HashSet<>();
 
     public PongView(Stage stage, Pong pong) {
+        sfx = new SoundEffects();
+
         views = List.of(
                 new PaddleView(pong.state.getPaddle(Side.LEFT)),
                 new PaddleView(pong.state.getPaddle(Side.RIGHT)),
@@ -50,5 +54,9 @@ public class PongView extends Group {
         for (var view : views) {
             view.render(gc);
         }
+    }
+
+    public void playSound(Event event) {
+        sfx.play(event);
     }
 }

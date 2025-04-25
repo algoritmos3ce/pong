@@ -47,19 +47,23 @@ public class GameState {
         score[s.ordinal()]++;
     }
 
-    public void update() {
-        ball.update(paddles);
-        checkGoal();
+    public Event update() {
+        var updateEvent = ball.update(paddles);
+        var goalEvent = checkGoal();
+        return updateEvent != null ? updateEvent : goalEvent;
     }
 
-    private void checkGoal() {
+    private Event checkGoal() {
         if (ball.pos.x() > Pong.W) {
             incScore(Side.LEFT);
             startPoint();
+            return Event.GOAL;
         }
         if (ball.pos.x() < 0) {
             incScore(Side.RIGHT);
             startPoint();
+            return Event.GOAL;
         }
+        return null;
     }
 }

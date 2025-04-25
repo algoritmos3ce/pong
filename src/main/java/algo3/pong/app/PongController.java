@@ -44,7 +44,10 @@ public class PongController extends AnimationTimer {
         long dt = now - last;
         while (dt > NANOSECONDS_PER_FRAME) {
             dt -= NANOSECONDS_PER_FRAME;
-            pong.update(actions);
+            var event = pong.update(actions);
+            if (event != null) {
+                view.playSound(event);
+            }
             last += NANOSECONDS_PER_FRAME;
         }
     }

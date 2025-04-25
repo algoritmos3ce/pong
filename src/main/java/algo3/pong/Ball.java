@@ -25,18 +25,26 @@ public class Ball {
         vel = randomVelocity();
     }
 
-    public void update(Paddle[] paddles) {
+    public Event update(Paddle[] paddles) {
         pos = pos.add(vel.scaled(Pong.VELOCITY));
 
         // bounce against up/down walls
+        boolean wallHit = false;
         if (pos.y() < RADIUS || pos.y() > Pong.H - RADIUS) {
             vel = vel.invertY();
+            wallHit = true;
         }
 
         // bounce against paddles
-        if (paddles[Side.LEFT.ordinal()].isHittingBall(this) ||
-                paddles[Side.RIGHT.ordinal()].isHittingBall(this)) {
+        boolean left = paddles[Side.LEFT.ordinal()].isHittingBall(this);
+        boolean right = paddles[Side.RIGHT.ordinal()].isHittingBall(this);
+        if (left || right) {
             vel = vel.invertX().add(new Vec2D(0, 2 * (random() - 0.5)));
         }
+
+        return left ? Event.PADDLE_LEFT_HIT :
+                right ? Event.PADDLE_RIGHT_HIT :
+                        wallHit ? Event.WALL_HIT :
+                                null;
     }
 }

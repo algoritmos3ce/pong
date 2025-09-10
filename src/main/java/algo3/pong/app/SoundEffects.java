@@ -2,10 +2,7 @@ package algo3.pong.app;
 
 import algo3.pong.Event;
 import javafx.scene.media.AudioClip;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 
-import java.net.URISyntaxException;
 import java.util.EnumMap;
 
 public class SoundEffects {

@@ -10,12 +10,17 @@ import java.util.Map;
 public class PongController extends AnimationTimer {
     final long NANOSECONDS_PER_FRAME = Pong.MS_PER_FRAME * 1_000_000;
 
+    // Actions that are fired continuously as long as the keys are pressed
     final static Map<KeyCode, Action> CONTROLS = Map.of(
             KeyCode.Q, new ActionMovePaddle(Side.LEFT, -1),
             KeyCode.A, new ActionMovePaddle(Side.LEFT, +1),
             KeyCode.UP, new ActionMovePaddle(Side.RIGHT, -1),
-            KeyCode.DOWN, new ActionMovePaddle(Side.RIGHT, +1),
-            KeyCode.R, new ActionReset()
+            KeyCode.DOWN, new ActionMovePaddle(Side.RIGHT, +1)
+    );
+
+    // Actions that are fired once when the key is pressed and then released
+    final static Map<String, Action> COMMANDS = Map.of(
+            "r", new ActionReset()
     );
 
     private final Pong pong;
@@ -35,7 +40,7 @@ public class PongController extends AnimationTimer {
         // update the view
         view.render();
 
-        var actions = getActions();
+        var controlActions = mapToActions(view.getKeysPressed(), CONTROLS);
 
         // make sure we update the physics exactly 60 times per second
         if (last == 0) {
@@ -44,7 +49,12 @@ public class PongController extends AnimationTimer {
         long dt = now - last;
         while (dt > NANOSECONDS_PER_FRAME) {
             dt -= NANOSECONDS_PER_FRAME;
-            var event = pong.update(actions);
+            var commandActions = mapToActions(view.getKeysTyped(), COMMANDS);
+
+            ArrayList<Action> allActions = new ArrayList<>(controlActions);
+            allActions.addAll(commandActions);
+
+            var event = pong.update(allActions);
             if (event != null) {
                 view.playSound(event);
             }
@@ -52,10 +62,10 @@ public class PongController extends AnimationTimer {
         }
     }
 
-    private ArrayList<Action> getActions() {
+    private <T> ArrayList<Action> mapToActions(Iterable<T> keys, Map<T, Action> map) {
         var actions = new ArrayList<Action>();
-        for (var k : view.getKeysPressed()) {
-            var action = CONTROLS.get(k);
+        for (var k : keys) {
+            var action = map.get(k);
             if (action != null) {
                 actions.add(action);
             }

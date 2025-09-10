@@ -10,16 +10,19 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class PongView extends Group {
     private final Canvas canvas;
     private final List<View> views;
     private final SoundEffects sfx;
 
+    // keys that are being held down
     private final Set<KeyCode> keysPressed = new HashSet<>();
+
+    // list of keys that were typed (pressed and then released) since the last
+    // call to getKeysTyped()
+    private final List<String> keysTyped = new ArrayList<>();
 
     public PongView(Stage stage, Pong pong) {
         sfx = new SoundEffects();
@@ -38,6 +41,7 @@ public class PongView extends Group {
 
         scene.setOnKeyPressed(e -> keysPressed.add(e.getCode()));
         scene.setOnKeyReleased(e -> keysPressed.remove(e.getCode()));
+        scene.setOnKeyTyped(e -> keysTyped.add(e.getCharacter()));
 
         stage.setTitle("Pong");
         stage.setScene(scene);
@@ -46,6 +50,12 @@ public class PongView extends Group {
 
     public Set<KeyCode> getKeysPressed() {
         return keysPressed;
+    }
+
+    public List<String> getKeysTyped() {
+        var copy = new ArrayList<>(keysTyped);
+        keysTyped.clear();
+        return copy;
     }
 
     public void render() {

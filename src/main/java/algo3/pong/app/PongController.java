@@ -1,15 +1,17 @@
 package algo3.pong.app;
 
 import algo3.pong.*;
+import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.input.KeyCode;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-public class PongController extends AnimationTimer {
-    final long NANOSECONDS_PER_FRAME = Pong.MS_PER_FRAME * 1_000_000;
-
+public class PongController {
     // Actions that are fired continuously as long as the keys are pressed
     final static Map<KeyCode, Action> CONTROLS = Map.of(
             KeyCode.Q, new ActionMovePaddle(Side.LEFT, -1),
@@ -25,41 +27,32 @@ public class PongController extends AnimationTimer {
 
     private final Pong pong;
     private final PongView view;
-
-    // timestamp when handle() was last called (nanoseconds)
-    long last = 0;
+    private final Timeline updateLoop;
+    private final AnimationTimer viewRenderLoop;
 
     public PongController(Pong pong, PongView view) {
         this.pong = pong;
         this.view = view;
+
+        this.updateLoop = new Timeline();
+        updateLoop.setCycleCount(Animation.INDEFINITE);
+        updateLoop.getKeyFrames().add(new KeyFrame(Duration.millis(Pong.MS_PER_FRAME), _ -> {
+            // this is executed exactly 60 times per second
+            updateGame();
+        }));
+        updateLoop.play();
+
+        this.viewRenderLoop = new AnimationTimer() {
+            @Override public void handle(long l) {
+                // this executed approximately 60 times per second
+                view.render();
+            }
+        };
     }
 
-    // this function implements javafx.AnimationTimer, and is executed approximately 60 times per second
-    @Override
-    public void handle(long now) {
-        // update the view
-        view.render();
-
-        var controlActions = mapToActions(view.getKeysPressed(), CONTROLS);
-
-        // make sure we update the physics exactly 60 times per second
-        if (last == 0) {
-            last = now;
-        }
-        long dt = now - last;
-        while (dt > NANOSECONDS_PER_FRAME) {
-            dt -= NANOSECONDS_PER_FRAME;
-            var commandActions = mapToActions(view.getKeysTyped(), COMMANDS);
-
-            ArrayList<Action> allActions = new ArrayList<>(controlActions);
-            allActions.addAll(commandActions);
-
-            var event = pong.update(allActions);
-            if (event != null) {
-                view.playSound(event);
-            }
-            last += NANOSECONDS_PER_FRAME;
-        }
+    public void start() {
+        updateLoop.play();
+        viewRenderLoop.start();
     }
 
     private <T> ArrayList<Action> mapToActions(Iterable<T> keys, Map<T, Action> map) {
@@ -71,5 +64,18 @@ public class PongController extends AnimationTimer {
             }
         }
         return actions;
+    }
+
+    private void updateGame() {
+        var controlActions = mapToActions(view.getKeysPressed(), CONTROLS);
+        var commandActions = mapToActions(view.getKeysTyped(), COMMANDS);
+
+        ArrayList<Action> allActions = new ArrayList<>(controlActions);
+        allActions.addAll(commandActions);
+
+        var event = pong.update(allActions);
+        if (event != null) {
+            view.playSound(event);
+        }
     }
 }

@@ -2,9 +2,12 @@ package algo3.pong.app;
 
 import algo3.pong.Pong;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 
 public class PongApp extends Application {
+    private PongController controller;
+
     public static void main(String[] args) {
         Application.launch();
     }
@@ -13,7 +16,13 @@ public class PongApp extends Application {
     public void start(Stage stage) {
         var pong = new Pong();
         var view = new PongView(stage, pong);
-        var controller = new PongController(pong, view);
+        controller = new PongController(pong, view);
         controller.start();
+
+    }
+
+    @Override
+    public void stop() {
+        controller.stop();
     }
 }

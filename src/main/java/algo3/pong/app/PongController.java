@@ -1,12 +1,8 @@
 package algo3.pong.app;
 
 import algo3.pong.*;
-import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.scene.input.KeyCode;
-import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -27,32 +23,53 @@ public class PongController {
 
     private final Pong pong;
     private final PongView view;
-    private final Timeline updateLoop;
+
+    private final AnimationTimer updateLoop;
     private final AnimationTimer viewRenderLoop;
 
     public PongController(Pong pong, PongView view) {
         this.pong = pong;
         this.view = view;
 
-        this.updateLoop = new Timeline();
-        updateLoop.setCycleCount(Animation.INDEFINITE);
-        updateLoop.getKeyFrames().add(new KeyFrame(Duration.millis(Pong.MS_PER_FRAME), _ -> {
-            // this is executed exactly 60 times per second
-            updateGame();
-        }));
-        updateLoop.play();
+        // updateLoop calls updateGame according to Pong.FPS
+        this.updateLoop = new AnimationTimer() {
+            static final long NANOSECONDS_PER_FRAME = Pong.MS_PER_FRAME * 1_000_000;
 
+            long accumulatedNanos = 0;
+            long last = 0;
+
+            @Override
+            public void handle(long now) {
+                if (last == 0) {
+                    last = now;
+                }
+                long dt = now - last;
+                last = now;
+
+                accumulatedNanos += dt;
+                while (accumulatedNanos > NANOSECONDS_PER_FRAME) {
+                    accumulatedNanos -= NANOSECONDS_PER_FRAME;
+                    updateGame();
+                }
+            }
+        };
+
+        // viewRenderLoop calls view.render() approximately 60 times per second
         this.viewRenderLoop = new AnimationTimer() {
-            @Override public void handle(long l) {
-                // this executed approximately 60 times per second
+            @Override public void handle(long now) {
                 view.render();
             }
         };
     }
 
     public void start() {
-        updateLoop.play();
+        updateLoop.start();
         viewRenderLoop.start();
+    }
+
+    public void stop() {
+        updateLoop.stop();
+        viewRenderLoop.stop();
     }
 
     private <T> ArrayList<Action> mapToActions(Iterable<T> keys, Map<T, Action> map) {
